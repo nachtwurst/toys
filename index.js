@@ -1,5 +1,5 @@
 const speed = 2; // pixels per frame
-const numElements = 40; // number of bouncing elements
+const numElements = 55; // number of bouncing elements
 const elements = [];
 const bpm = 132;
 const msPerBeat = 60000 / bpm;
@@ -138,7 +138,7 @@ function fadeScreenCover(duration = 1000) { // Duration in milliseconds, default
     }, duration);
 }
 
-// Replace your existing DOMContentLoaded event listener with this:
+
 window.addEventListener('DOMContentLoaded', async () => {
     const playButton = document.createElement('button');
     playButton.textContent = 'Start Experience';
