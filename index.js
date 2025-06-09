@@ -12,6 +12,11 @@ const colors = [
 ];
 let colorIndex = 0;
 const music = new Audio('static/audio/dingdongsong.m4a');
+music.volume = 0.25;
+const clickAudio = new Audio('static/audio/click.mp3');
+clickAudio.volume = 0.25;
+let audioPermissionGranted = false;
+const screenCover = document.getElementById('screen-blackout');
 
 class BouncingElement {
     constructor(element, startX, startY) {
@@ -67,12 +72,28 @@ function updateOverlayColor() {
     overlay.style.backgroundColor = colors[colorIndex];
 }
 
-// Start animation after DOM is loaded
-window.addEventListener('DOMContentLoaded', () => {
-    music.play();
-    music.loop = true;
-    music.volume = 0.25;
-    
+async function requestAudioPermission() {
+    try {
+        await music.play();
+        audioPermissionGranted = true;
+        music.pause(); // Pause immediately after confirming we can play
+        music.currentTime = 0; // Reset to beginning
+        return true;
+    } catch (error) {
+        console.log('Audio play blocked:', error);
+        return false;
+    }
+}
+
+function startAudioExperience() {
+    if (audioPermissionGranted) {
+        music.play();
+        music.loop = true;
+        music.volume = 0.25;
+    }
+}
+
+function startAnimation() {
     const template = document.getElementById('cat-img-box');
     
     // Get template dimensions before modifications
@@ -105,4 +126,58 @@ window.addEventListener('DOMContentLoaded', () => {
     // Remove template last
     template.remove();
     moveAll();
+}
+
+function fadeScreenCover(duration = 1000) { // Duration in milliseconds, default 1s
+    screenCover.style.transition = `opacity ${duration/1000}s ease-in-out`;
+    screenCover.style.opacity = '0';
+    
+    // Wait for transition to complete before hiding
+    setTimeout(() => {
+        screenCover.style.display = 'none';
+    }, duration);
+}
+
+// Replace your existing DOMContentLoaded event listener with this:
+window.addEventListener('DOMContentLoaded', async () => {
+    const playButton = document.createElement('button');
+    playButton.textContent = 'Start Experience';
+    playButton.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        padding: 20px 40px;
+        font-size: 32px;
+        font-family: 'Brush Script MT', 'Comic Sans MS', cursive;
+        background: #FF0080;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        text-shadow: 
+            2px 2px 3px rgba(0,0,0,0.5),
+            -1px -1px 2px rgba(0,0,0,0.4),
+            1px -1px 2px rgba(0,0,0,0.4),
+            -1px 1px 2px rgba(0,0,0,0.4),
+            0 0 12px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    `;
+    
+    document.body.appendChild(playButton);
+    
+    playButton.addEventListener('click', async () => {
+        const canPlay = await requestAudioPermission();
+        if (canPlay) {
+            clickAudio.play();
+            startAudioExperience();
+            playButton.remove();
+            fadeScreenCover(1500);
+            startAnimation();
+        } else {
+            playButton.textContent = '⚠️ Audio blocked - Click to try again';
+            playButton.style.background = '#FF4040';
+        }
+    });
 });
